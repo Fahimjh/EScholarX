@@ -5,6 +5,7 @@ import Dashboard from "./pages/student/Dashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Home from "./pages/Home";
 import Courses from "./pages/student/Courses";
+import CourseDetail from "./pages/student/CourseDetail";
 import LessonPage from "./pages/student/LessonPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
@@ -27,6 +28,7 @@ export default function App() {
             }
           />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route
             path="/course/:courseId/lesson/:lessonId"
             element={
