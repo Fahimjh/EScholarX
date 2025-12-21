@@ -13,8 +13,28 @@ const LessonSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
     },
+    mediaUrl: {
+      type: String,
+    },
+    mediaType: {
+      type: String,
+      enum: ["image", "video", "pdf", "file"],
+    },
+    media: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: ["image", "video", "pdf", "file"],
+          required: true,
+        },
+      },
+    ],
     order: {
       type: Number,
       default: 0,
