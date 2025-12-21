@@ -25,6 +25,21 @@ export const getAllCourses = async (_: Request, res: Response) => {
   }
 };
 
+export const getCourseById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const course = await Course.findById(id).populate("category");
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch course" });
+  }
+};
+
 export const updateCourse = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
