@@ -18,6 +18,33 @@ const ProgressSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    completedMaterials: {
+      type: Number,
+      default: 0,
+    },
+    totalMaterials: {
+      type: Number,
+      default: 0,
+    },
+    // Track which specific materials and lessons the student has completed
+    completedMaterialEntries: [
+      {
+        lesson: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Lesson",
+        },
+        mediaId: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    completedLessonIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Lesson",
+      },
+    ],
     completed: {
       type: Boolean,
       default: false,

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import Enrollment from "../models/Enrollment";
 import Progress from "../models/Progress";
 import Course from "../models/Course";
+import Lesson from "../models/Lesson";
 import User from "../models/User";
 import { sendEmail } from "../utils/sendEmail";
 
@@ -26,10 +27,28 @@ export const enrollCourse = async (req: Request, res: Response) => {
       course: courseId,
     });
 
+    // Calculate total lessons and learning materials for accurate progress tracking
+    const lessons = await Lesson.find({ course: courseId });
+    const totalLessons = lessons.length;
+    let totalMaterials = 0;
+
+    lessons.forEach((lesson) => {
+      const mediaItems = Array.isArray((lesson as any).media)
+        ? (lesson as any).media
+        : [];
+
+      if (mediaItems.length > 0) {
+        totalMaterials += mediaItems.length;
+      } else if ((lesson as any).mediaUrl) {
+        totalMaterials += 1;
+      }
+    });
+
     await Progress.create({
       student: userId,
       course: courseId,
-      totalLessons: 10, // placeholder, update dynamically later
+      totalLessons,
+      totalMaterials,
     });
 
     // Send congratulations email with course price information
