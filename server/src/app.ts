@@ -7,6 +7,7 @@ import enrollmentRoutes from "./routes/enrollmentRoutes";
 import progressRoutes from "./routes/progressRoutes";
 import lessonRoutes from "./routes/lessonRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
+import paymentRoutes from "./routes/paymentRoutes";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/payments", paymentRoutes);
 
 export default app;
