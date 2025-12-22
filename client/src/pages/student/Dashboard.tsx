@@ -24,7 +24,9 @@ const Dashboard = () => {
 				courseId: p.course?._id ?? null,
 				title: p.course?.title ?? "Untitled course",
 				progressPercent:
-					p.totalLessons > 0
+					p.totalMaterials && p.totalMaterials > 0
+						? Math.round((p.completedMaterials / p.totalMaterials) * 100)
+						: p.totalLessons > 0
 						? Math.round((p.completedLessons / p.totalLessons) * 100)
 						: 0,
 			}));
