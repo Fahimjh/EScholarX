@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
 interface CourseCard {
@@ -13,6 +14,7 @@ const Dashboard = () => {
 	const [courses, setCourses] = useState<CourseCard[]>([]);
 	const [walletBalance] = useState(0);
 	const navigate = useNavigate();
+	const { logout } = useAuth();
 
 	useEffect(() => {
 		const fetchProgress = async () => {
@@ -56,6 +58,23 @@ const Dashboard = () => {
 							Track your learning progress and quickly jump back into
 							courses.
 						</p>
+					</div>
+					<div className="flex items-center gap-3 text-xs">
+						<button
+							onClick={() => navigate("/")}
+							className="px-3 py-1 rounded border border-slate-600 hover:border-blue-500"
+						>
+							Home
+						</button>
+						<button
+							onClick={() => {
+								logout();
+								navigate("/");
+							}}
+							className="px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500/10"
+						>
+							Logout
+						</button>
 					</div>
 				</header>
 

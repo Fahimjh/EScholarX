@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 interface Category {
 	_id: string;
@@ -24,6 +25,7 @@ const Home = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const navigate = useNavigate();
+	const { user, logout } = useAuth();
 
 	useEffect(() => {
 		const load = async () => {
@@ -54,8 +56,49 @@ const Home = () => {
 			: courses.filter((c) => c.category?._id === selectedCategory);
 
 	return (
-		<div className="min-h-screen bg-slate-950 text-slate-50 px-4 py-8">
-			<div className="max-w-6xl mx-auto space-y-10">
+		<div className="min-h-screen bg-slate-950 text-slate-50 px-4 py-4 md:py-8">
+			<div className="max-w-6xl mx-auto space-y-8 md:space-y-10">
+				<header className="flex items-center justify-between mb-2">
+					<h1 className="text-lg font-semibold tracking-tight">
+						ScholarX
+					</h1>
+					<div className="flex items-center gap-3 text-xs md:text-sm">
+						{user ? (
+							<>
+								<button
+									onClick={() => navigate("/dashboard")}
+									className="px-3 py-1 rounded border border-slate-600 hover:border-blue-500"
+								>
+									Dashboard
+								</button>
+								<button
+									onClick={() => {
+										logout();
+										navigate("/");
+									}}
+									className="px-3 py-1 rounded border border-red-500 text-red-400 hover:bg-red-500/10"
+								>
+									Logout
+								</button>
+							</>
+						) : (
+							<>
+								<Link
+									to="/login"
+									className="px-3 py-1 rounded border border-slate-600 hover:border-blue-500"
+								>
+									Login
+								</Link>
+								<Link
+									to="/register"
+									className="px-3 py-1 rounded border border-slate-600 hover:border-blue-500"
+								>
+									Register
+								</Link>
+							</>
+						)}
+					</div>
+				</header>
 				<div className="grid gap-8 md:grid-cols-2 items-center">
 					<div className="space-y-4">
 						<p className="text-xs uppercase tracking-[0.25em] text-blue-400">
@@ -69,20 +112,22 @@ const Home = () => {
 							love, and track your learning journey from a simple
 							dashboard.
 						</p>
-						<div className="flex flex-wrap gap-3 mt-2">
-							<Link
-								to="/login"
-								className="bg-blue-600 hover:bg-blue-500 transition text-white px-4 py-2 rounded text-sm font-medium"
-							>
-								Login
-							</Link>
-							<Link
-								to="/register"
-								className="border border-slate-500 hover:border-blue-400 text-slate-100 hover:text-blue-300 transition px-4 py-2 rounded text-sm font-medium"
-							>
-								Register
-							</Link>
-						</div>
+						{!user && (
+							<div className="flex flex-wrap gap-3 mt-2">
+								<Link
+									to="/login"
+									className="bg-blue-600 hover:bg-blue-500 transition text-white px-4 py-2 rounded text-sm font-medium"
+								>
+									Login
+								</Link>
+								<Link
+									to="/register"
+									className="border border-slate-500 hover:border-blue-400 text-slate-100 hover:text-blue-300 transition px-4 py-2 rounded text-sm font-medium"
+								>
+									Register
+								</Link>
+							</div>
+						)}
 					</div>
 					<div className="hidden md:block">
 						<div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 space-y-3 shadow-lg">
