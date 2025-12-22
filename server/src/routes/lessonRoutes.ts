@@ -11,7 +11,7 @@ const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
 router.get("/:lessonId", protect, getLessonById);
-router.get("/by-course/:courseId", protect, getLessonsByCourse);
+router.get("/by-course/:courseId", getLessonsByCourse);
 router.post("/", protect, adminOnly, upload.any(), createLesson);
 
 export default router;

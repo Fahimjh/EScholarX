@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as fs from "fs";
 import Lesson from "../models/Lesson";
+import Enrollment from "../models/Enrollment";
 import cloudinary from "../config/cloudinary";
 
 export const getLessonById = async (req: Request, res: Response) => {
@@ -10,6 +11,20 @@ export const getLessonById = async (req: Request, res: Response) => {
 
     if (!lesson) {
       return res.status(404).json({ message: "Lesson not found" });
+    }
+
+    const user = (req as any).user;
+    // Admins can always view lessons; students must be enrolled
+    if (user && user.role !== "admin") {
+      const isEnrolled = await Enrollment.exists({
+        student: user.id,
+        course: lesson.course,
+      });
+      if (!isEnrolled) {
+        return res
+          .status(403)
+          .json({ message: "Please enroll in this course to access lessons." });
+      }
     }
 
     res.json(lesson);
@@ -43,7 +58,7 @@ export const createLesson = async (req: Request, res: Response) => {
     const files = filesArray || (singleFile ? [singleFile] : undefined);
 
     let media:
-      | { url: string; type: "image" | "video" | "pdf" | "file" }[]
+      | { url: string; type: "image" | "video" | "pdf" | "file"; name?: string }[]
       | undefined;
 
     if (files && files.length > 0) {
@@ -53,22 +68,30 @@ export const createLesson = async (req: Request, res: Response) => {
           resource_type: "auto",
         });
 
+        const mimetype = (file.mimetype || "").toLowerCase();
         let mediaType: "image" | "video" | "pdf" | "file";
 
-        switch (uploadResult.resource_type) {
-          case "image":
-            mediaType = "image";
-            break;
-          case "video":
-            mediaType = "video";
-            break;
-          case "raw":
-          default:
-            mediaType =
-              file.mimetype === "application/pdf" ? "pdf" : "file";
+        if (mimetype.includes("pdf") || uploadResult.format === "pdf") {
+          mediaType = "pdf";
+        } else {
+          switch (uploadResult.resource_type) {
+            case "image":
+              mediaType = "image";
+              break;
+            case "video":
+              mediaType = "video";
+              break;
+            case "raw":
+            default:
+              mediaType = "file";
+          }
         }
 
-        media.push({ url: uploadResult.secure_url, type: mediaType });
+        media.push({
+          url: uploadResult.secure_url,
+          type: mediaType,
+          name: file.originalname,
+        });
 
         fs.promises
           .unlink(file.path)

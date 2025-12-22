@@ -33,6 +33,10 @@ const LessonSchema = new mongoose.Schema(
           enum: ["image", "video", "pdf", "file"],
           required: true,
         },
+        name: {
+          type: String,
+          required: false,
+        },
       },
     ],
     order: {
