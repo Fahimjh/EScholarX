@@ -59,14 +59,16 @@ export const enrollCourse = async (req: Request, res: Response) => {
 
     if (course && user) {
       const price = (course as any).price;
-      const priceText = typeof price === "number" ? price.toFixed(2) : String(price);
-      const subject = `Congratulations on enrolling in ${course.title}`;
-      const text = `Hi ${user.name},\n\n` +
-        `You have successfully enrolled in the course "${course.title}".\n` +
-        `Course price (for future payments): BDT ${priceText}.\n\n` +
+      const priceText =
+        typeof price === "number" ? price.toFixed(2) : String(price);
+      const subject = `Congratulations on your enrollment in ${course.title}`;
+      const text =
+        `Hi ${user.name},\n\n` +
+        `Your payment was successful and you are now enrolled in the course "${course.title}".\n` +
+        `Amount paid: BDT ${priceText}.\n\n` +
         `You can now start learning from your dashboard.\n\n` +
         `Best regards,\n` +
-        `ScholarX Team`;
+        `EScholarX Team`;
 
       // We don't block enrollment if email fails
       try {

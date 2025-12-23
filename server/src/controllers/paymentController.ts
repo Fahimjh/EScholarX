@@ -7,6 +7,7 @@ import User from "../models/User";
 import Enrollment from "../models/Enrollment";
 import Lesson from "../models/Lesson";
 import Progress from "../models/Progress";
+import { sendEmail } from "../utils/sendEmail";
 
 const getSslConfig = () => {
   const storeId = process.env.SSLCZ_STORE_ID;
@@ -97,12 +98,14 @@ export const createPaymentSession = async (req: Request, res: Response) => {
   }
 };
 
-// Helper: create enrollment + progress after successful payment
+// Helper: create enrollment + progress after successful payment, and send email
 const enrollAfterPayment = async (studentId: string, courseId: string) => {
-  const existing = await Enrollment.findOne({
-    student: studentId,
-    course: courseId,
-  });
+  const [existing, course, user] = await Promise.all([
+    Enrollment.findOne({ student: studentId, course: courseId }),
+    Course.findById(courseId),
+    User.findById(studentId),
+  ]);
+
   if (existing) return existing;
 
   const enrollment = await Enrollment.create({
@@ -132,6 +135,27 @@ const enrollAfterPayment = async (studentId: string, courseId: string) => {
     totalLessons,
     totalMaterials,
   });
+
+  // Send confirmation email (best-effort)
+  if (course && user) {
+    try {
+      const price = (course as any).price;
+      const priceText =
+        typeof price === "number" ? price.toFixed(2) : String(price);
+      const subject = `Congratulations on your enrollment in ${course.title}`;
+      const text =
+        `Hi ${user.name},\n\n` +
+        `Your payment was successful and you are now enrolled in the course "${course.title}".\n` +
+        `Amount paid: BDT ${priceText}.\n\n` +
+        `You can now start learning from your dashboard.\n\n` +
+        `Best regards,\n` +
+        `EScholarX Team`;
+
+      await sendEmail(user.email, subject, text);
+    } catch (err) {
+      console.error("Failed to send enrollment email after payment:", err);
+    }
+  }
 
   return enrollment;
 };
@@ -165,5 +189,46 @@ export const sslIpnHandler = async (req: Request, res: Response) => {
     console.error("Error handling SSLCommerz IPN:", error);
     return res.status(500).json({ message: "Failed to process IPN" });
   }
+};
+
+// Success callback (browser redirect). Useful in local dev where IPN cannot reach localhost.
+export const paymentSuccess = async (req: Request, res: Response) => {
+  try {
+    const data = (req.body && Object.keys(req.body).length > 0
+      ? req.body
+      : req.query) as any;
+
+    const { value_a, value_b } = data;
+    const studentId = String(value_a || "");
+    const courseId = String(value_b || "");
+
+    if (
+      mongoose.Types.ObjectId.isValid(studentId) &&
+      mongoose.Types.ObjectId.isValid(courseId)
+    ) {
+      await enrollAfterPayment(studentId, courseId);
+    } else {
+      console.warn("paymentSuccess called with invalid ids", {
+        studentId,
+        courseId,
+      });
+    }
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    return res.redirect(`${clientUrl}/dashboard`);
+  } catch (error) {
+    console.error("Error handling payment success callback:", error);
+    return res.status(500).send("Payment processed but enrollment failed.");
+  }
+};
+
+export const paymentFail = async (_req: Request, res: Response) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  return res.redirect(`${clientUrl}/payment-failed`);
+};
+
+export const paymentCancel = async (_req: Request, res: Response) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  return res.redirect(`${clientUrl}/payment-cancelled`);
 };
 
