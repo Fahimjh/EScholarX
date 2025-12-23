@@ -1,30 +1,39 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Courses() {
   const [courses, setCourses] = useState<any[]>([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     api.get("/courses").then((res) => setCourses(res.data));
   }, []);
 
-  const goToFirstLesson = async (courseId: string) => {
-    const res = await api.get(`/lessons/by-course/${courseId}`);
-    const lessons = res.data;
-    if (!lessons || lessons.length === 0) {
-      alert("No lessons available for this course yet.");
+  const startPayment = async (courseId: string) => {
+    if (!user) {
+      navigate("/login");
       return;
     }
 
-    const firstLesson = lessons[0];
-    navigate(`/course/${courseId}/lesson/${firstLesson._id}`);
-  };
+    try {
+      const res = await api.post("/payments/create-session", { courseId });
+      const redirectUrl = res.data?.url as string | undefined;
 
-  const enrollAndStart = async (courseId: string) => {
-    await api.post("/enrollments", { courseId });
-    await goToFirstLesson(courseId);
+      if (!redirectUrl) {
+        alert("Failed to start payment. Please try again.");
+        return;
+      }
+
+      window.location.href = redirectUrl;
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        "Failed to start payment. Please try again.";
+      alert(message);
+    }
   };
 
   return (
@@ -34,10 +43,10 @@ export default function Courses() {
           <h3 className="font-semibold text-lg">{c.title}</h3>
           <p className="text-sm text-gray-600">{c.description}</p>
           <button
-            onClick={() => enrollAndStart(c._id)}
+            onClick={() => startPayment(c._id)}
             className="bg-blue-600 text-white text-sm rounded px-3 py-1 mt-2"
           >
-            Enroll &amp; Start
+            {user ? "Pay & Enroll" : "Login to enroll"}
           </button>
         </div>
       ))}

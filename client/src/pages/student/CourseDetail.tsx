@@ -79,16 +79,28 @@ const CourseDetail = () => {
       return;
     }
 
+    // If already enrolled, just go to the first lesson
+    if (enrolled && lessons[0]) {
+      navigate(`/course/${courseId}/lesson/${lessons[0]._id}`);
+      return;
+    }
+
+    // Otherwise start payment flow via SSLCommerz
     try {
       setStatus(null);
-      await api.post("/enrollments", { courseId });
-      setEnrolled(true);
-      if (lessons[0]) {
-        navigate(`/course/${courseId}/lesson/${lessons[0]._id}`);
+      const res = await api.post("/payments/create-session", { courseId });
+      const redirectUrl = res.data?.url as string | undefined;
+
+      if (!redirectUrl) {
+        setStatus("Failed to start payment. Please try again.");
+        return;
       }
+
+      window.location.href = redirectUrl;
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || "Failed to enroll in course.";
+        error?.response?.data?.message ||
+        "Failed to start payment. Please try again.";
       setStatus(message);
     }
   };
@@ -148,7 +160,11 @@ const CourseDetail = () => {
               onClick={handleEnroll}
               className="bg-blue-600 hover:bg-blue-500 transition text-white px-4 py-2 rounded text-sm font-medium"
             >
-              {user ? (enrolled ? "Go to first lesson" : "Enroll & Start") : "Login to enroll"}
+              {user
+                ? enrolled
+                  ? "Go to first lesson"
+                  : "Pay & Enroll"
+                : "Login to enroll"}
             </button>
             {status && (
               <p className="text-xs text-red-400 max-w-xs text-right">{status}</p>
